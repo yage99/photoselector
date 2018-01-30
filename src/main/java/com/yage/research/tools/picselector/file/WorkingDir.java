@@ -6,13 +6,9 @@ package com.yage.research.tools.picselector.file;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -29,6 +25,15 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 	 * 
 	 */
 	private static final long serialVersionUID = -7306774053601124455L;
+
+	/**
+	 * 
+	 */
+	public static final int SELECT_FLAG = 0x0;
+	/**
+	 * 
+	 */
+	public static final int DELETE_FLAG = 0x1;
 	List<SelectableFile> fileList = new LinkedList<>();
 	private int currentIndex;
 	private File metaFile;
@@ -222,6 +227,32 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 		if (fileList == null || getCurrentIndex() >= fileList.size())
 			return null;
 		return fileList.get(getCurrentIndex());
+	}
+
+	/**
+	 * @param selectFlag
+	 * @param exportFile
+	 * @throws IOException
+	 */
+	public void export(int selectFlag, String exportFile) throws IOException {
+		BufferedWriter writer = new BufferedWriter(new FileWriter(exportFile));
+		for (int i = 0; i < fileList.size(); i++) {
+			SelectableFile file = fileList.get(i);
+			switch (selectFlag) {
+			case SELECT_FLAG:
+				if (file.isSelected()) {
+					writer.write(file.getName() + "\n");
+				}
+				break;
+			case DELETE_FLAG:
+				if (file.isDeleted()) {
+					writer.write(file.getName() + "\n");
+				}
+				break;
+			}
+		}
+		writer.flush();
+		writer.close();
 	}
 
 }

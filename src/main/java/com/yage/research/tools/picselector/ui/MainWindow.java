@@ -19,9 +19,11 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
 import com.yage.research.tools.picselector.file.SelectableFile;
@@ -170,6 +172,51 @@ public class MainWindow {
 
 			public void handleEvent(Event event) {
 				selectCurrentPic();
+			}
+
+		});
+
+		MenuItem exportItem = new MenuItem(menuBar, SWT.CASCADE);
+		exportItem.setText("&Export");
+		Menu exportMenu = new Menu(shell, SWT.DROP_DOWN);
+		exportItem.setMenu(exportMenu);
+
+		MenuItem selectedExportAction = new MenuItem(exportMenu, SWT.PUSH);
+		selectedExportAction.setText("Export &Selected");
+		selectedExportAction.addListener(SWT.Selection, new Listener() {
+
+			public void handleEvent(Event event) {
+				FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+				dialog.setFileName("selected.csv");
+				String exportFile = dialog.open();
+				if (exportFile == null || "".equals(exportFile))
+					return;
+
+				try {
+					workingDir.export(WorkingDir.SELECT_FLAG, exportFile);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
+
+		});
+
+		MenuItem deletedExportAction = new MenuItem(exportMenu, SWT.PUSH);
+		deletedExportAction.setText("Export &Deleted");
+		deletedExportAction.addListener(SWT.Selection, new Listener() {
+
+			public void handleEvent(Event event) {
+				FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+				dialog.setFileName("deleted.csv");
+				String exportFile = dialog.open();
+				if (exportFile == null || "".equals(exportFile))
+					return;
+				try {
+					workingDir.export(WorkingDir.DELETE_FLAG, exportFile);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 
 		});
