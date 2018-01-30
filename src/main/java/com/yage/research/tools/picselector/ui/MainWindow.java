@@ -77,9 +77,11 @@ public class MainWindow {
 		try {
 			this.workingDir = new WorkingDir(this.folder, pics);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		this.currentFile = this.workingDir.getCurrentFile();
+		canvas.redraw();
 	}
 
 	/**
@@ -178,8 +180,6 @@ public class MainWindow {
 			private int indexBuffer = 0;
 
 			public void keyReleased(KeyEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 
 			public void keyPressed(KeyEvent e) {

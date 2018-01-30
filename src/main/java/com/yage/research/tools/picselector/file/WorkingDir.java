@@ -4,10 +4,15 @@
 package com.yage.research.tools.picselector.file;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -86,14 +91,25 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 		}
 
 		this.metaFile = new File(parent, ".picmeta");
-		if (this.metaFile.exists() && !this.metaFile.isAbsolute()) {
-			FileReader reader = new FileReader(this.metaFile);
-			this.currentIndex = reader.read();
+		if (this.metaFile.exists() && !this.metaFile.isDirectory()) {
+			BufferedReader reader = new BufferedReader(new FileReader(this.metaFile));
+			try {
+				this.currentIndex = Integer.valueOf(reader.readLine());
+			} catch (Exception e) {
+				this.currentIndex = 0;
+			}
 			reader.close();
 
-			if (this.currentIndex >= fileList.size()) {
-				this.currentIndex = fileList.size() - 1;
+			if (this.currentIndex < 0) {
+				setCurrentIndex(0);
+			} else if (this.currentIndex >= fileList.size()) {
+				setCurrentIndex(fileList.size() - 1);
+			} else {
+				setCurrentIndex(this.currentIndex);
 			}
+		} else {
+			this.metaFile.createNewFile();
+			setCurrentIndex(0);
 		}
 	}
 
@@ -117,6 +133,7 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 			pos += 4;
 		}
 
+		writer.flush();
 		writer.close();
 	}
 
@@ -185,8 +202,9 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 			return;
 
 		this.currentIndex = indexOfPic;
-		FileWriter writer = new FileWriter(metaFile);
-		writer.write(this.currentIndex);
+		BufferedWriter writer = new BufferedWriter(new FileWriter(this.metaFile));
+		writer.write(this.currentIndex + "\n");
+		writer.flush();
 		writer.close();
 	}
 
@@ -201,7 +219,7 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 	 * @return
 	 */
 	public SelectableFile getCurrentFile() {
-		if (fileList == null)
+		if (fileList == null || getCurrentIndex() >= fileList.size())
 			return null;
 		return fileList.get(getCurrentIndex());
 	}
