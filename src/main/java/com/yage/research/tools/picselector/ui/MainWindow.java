@@ -36,10 +36,9 @@ public class MainWindow {
 	protected Shell shell;
 	private File folder;
 	private Canvas canvas;
-	private SelectableFile currentFile;
 
-	private int currentIndex = 0;
 	private WorkingDir workingDir;
+	private SelectableFile currentFile;
 
 	/**
 	 * Open the window.
@@ -81,23 +80,22 @@ public class MainWindow {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		setPicIndex(0);
 	}
 
 	/**
 	 * @param indexOfPic
+	 * @throws IOException
 	 */
 	public void setPicIndex(int indexOfPic) {
-		if (indexOfPic < 0 || workingDir == null || indexOfPic >= workingDir.getFileLength())
-			return;
 
-		workingDir.setCurrentIndex(indexOfPic);
-		this.currentFile = workingDir.getFile(indexOfPic);
+		try {
+			workingDir.setCurrentIndex(indexOfPic);
+			this.currentFile = workingDir.getCurrentFile();
+			canvas.redraw();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-		canvas.redraw();
-
-		currentIndex = indexOfPic;
 	}
 
 	/**
@@ -234,7 +232,7 @@ public class MainWindow {
 					e.gc.drawImage(image, 0, 0, image.getBounds().width, image.getBounds().height, thumbX, thumbY,
 							thumbWidth, thumbHeight);
 					e.gc.setForeground(new Color(Display.getDefault(), 0, 0, 0));
-					e.gc.drawText(String.format("%d / %d\n%s", currentIndex, workingDir.getFileLength(),
+					e.gc.drawText(String.format("%d / %d\n%s", workingDir.getCurrentIndex(), workingDir.getFileLength(),
 							currentFile.getName()), thumbX, thumbHeight + 10);
 				}
 				if (currentFile.isSelected()) {
@@ -250,11 +248,11 @@ public class MainWindow {
 	}
 
 	protected void nextPic() {
-		setPicIndex(currentIndex + 1);
+		setPicIndex(workingDir.getCurrentIndex() + 1);
 	}
 
 	protected void prevPic() {
-		setPicIndex(currentIndex - 1);
+		setPicIndex(workingDir.getCurrentIndex() - 1);
 	}
 
 	protected void selectCurrentPic() {

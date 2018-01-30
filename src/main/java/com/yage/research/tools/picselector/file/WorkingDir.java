@@ -36,8 +36,6 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 	 */
 	public WorkingDir(File parent, String[] pics) throws IOException {
 		super(parent, ".picselect");
-		
-		this.metaFile = new File(parent, ".picmeta");
 
 		if (!this.exists() || this.isDirectory()) {
 			this.createNewFile();
@@ -85,6 +83,17 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 
 			fileList.sort(this);
 			construct();
+		}
+
+		this.metaFile = new File(parent, ".picmeta");
+		if (this.metaFile.exists() && !this.metaFile.isAbsolute()) {
+			FileReader reader = new FileReader(this.metaFile);
+			this.currentIndex = reader.read();
+			reader.close();
+
+			if (this.currentIndex >= fileList.size()) {
+				this.currentIndex = fileList.size() - 1;
+			}
 		}
 	}
 
@@ -169,9 +178,32 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 
 	/**
 	 * @param indexOfPic
+	 * @throws IOException
 	 */
-	public void setCurrentIndex(int indexOfPic) {
+	public void setCurrentIndex(int indexOfPic) throws IOException {
+		if (indexOfPic < 0 || indexOfPic >= fileList.size())
+			return;
+
 		this.currentIndex = indexOfPic;
+		FileWriter writer = new FileWriter(metaFile);
+		writer.write(this.currentIndex);
+		writer.close();
+	}
+
+	/**
+	 * @return the current working file
+	 */
+	public int getCurrentIndex() {
+		return this.currentIndex;
+	}
+
+	/**
+	 * @return
+	 */
+	public SelectableFile getCurrentFile() {
+		if (fileList == null)
+			return null;
+		return fileList.get(getCurrentIndex());
 	}
 
 }
