@@ -91,9 +91,9 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 				}
 			}
 
-			fileList.sort(this);
-			construct();
 		}
+		fileList.sort(this);
+		construct();
 
 		this.metaFile = new File(parent, ".picmeta");
 		if (this.metaFile.exists() && !this.metaFile.isDirectory()) {
