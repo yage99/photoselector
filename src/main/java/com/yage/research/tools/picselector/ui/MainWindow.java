@@ -8,6 +8,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.PaintEvent;
@@ -27,6 +29,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 
 import com.yage.research.tools.picselector.file.SelectableFile;
 import com.yage.research.tools.picselector.file.WorkingDir;
@@ -44,6 +47,7 @@ public class MainWindow {
 	private WorkingDir workingDir;
 	private SelectableFile currentFile;
 	private List list;
+	private Text regularExpression;
 
 	/**
 	 * Open the window.
@@ -81,6 +85,7 @@ public class MainWindow {
 
 		try {
 			this.workingDir = new WorkingDir(this.folder, pics);
+			this.workingDir.setCombineExpression(regularExpression.getText());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -239,80 +244,33 @@ public class MainWindow {
 		GridData gridData = new GridData(GridData.FILL, GridData.FILL, true, true);
 		gridData.horizontalSpan = 1;
 		list.setLayoutData(gridData);
+		list.setEnabled(false);
 
 		this.canvas = new Canvas(shell, SWT.NONE);
 		gridData = new GridData(GridData.FILL, GridData.FILL, true, true);
 		gridData.horizontalSpan = 4;
+		gridData.verticalSpan = 3;
 		canvas.setLayoutData(gridData);
 		canvas.setBackground(new Color(Display.getDefault(), 255, 255, 255));
-		canvas.addKeyListener(new KeyListener() {
+		canvas.addKeyListener(new CanvasActionListener());
+		canvas.addPaintListener(new CanvasPainter());
 
-			private int indexBuffer = 0;
+		new Label(shell, SWT.NONE).setText("Combine Expression:");
+		regularExpression = new Text(shell, SWT.SINGLE | SWT.BORDER);
+		gridData = new GridData(SWT.FILL, SWT.BEGINNING, false, false);
+		regularExpression.setLayoutData(gridData);
+		regularExpression.setText("TCGA-\\w{2}-\\w{4}-\\w{3}-\\w{2}-\\w{3}");
+		regularExpression.addFocusListener(new FocusListener() {
 
-			public void keyReleased(KeyEvent e) {
+			@Override
+			public void focusLost(FocusEvent e) {
+				workingDir.setCombineExpression(regularExpression.getText());
+				list.setItems(workingDir.getSelectedPics().toArray(new String[] {}));
 			}
 
-			public void keyPressed(KeyEvent e) {
-				// System.out.println(e.keyCode);
-				if (e.keyCode == 32) {
-					selectCurrentPic();
-				} else if (e.keyCode == 'd') {
-					delCurrentPic();
-				} else if (e.keyCode == 'k') {
-					prevPic();
-				} else if (e.keyCode == 'j') {
-					nextPic();
-				} else if (e.keyCode >= '0' && e.keyCode <= '9') {
-					this.indexBuffer *= 10;
-					this.indexBuffer += e.keyCode - '0';
-				} else if (e.keyCode == 'g') {
-					setPicIndex(this.indexBuffer);
-					this.indexBuffer = 0;
-				}
-			}
-		});
-		canvas.addPaintListener(new PaintListener() {
-			public void paintControl(PaintEvent e) {
-				if (currentFile == null)
-					return;
+			@Override
+			public void focusGained(FocusEvent e) {
 
-				if (e.x != 10 || e.y != 10 || e.width != 10 || e.height != 10) {
-					Image image = new Image(Display.getDefault(), currentFile.getAbsolutePath());
-					float srcWidth = image.getBounds().width;
-					float srcHeight = image.getBounds().height;
-					int targetWidth = canvas.getBounds().width;
-					int targetHeight = canvas.getBounds().height;
-					float widthRatio = targetWidth / srcWidth;
-					float heightRatio = targetHeight / srcHeight;
-					if (widthRatio > heightRatio) {
-						targetWidth = (int) (heightRatio * srcWidth);
-					} else {
-						targetHeight = (int) (widthRatio * srcHeight);
-					}
-
-					int thumbX = targetWidth + 10;
-					int thumbY = 0;
-					int thumbWidth = canvas.getBounds().width - thumbX;
-					if (thumbWidth > 200) {
-						thumbWidth = 200;
-					}
-					int thumbHeight = (int) (thumbWidth / srcWidth * srcHeight);
-					e.gc.drawImage(image, 0, 0, image.getBounds().width, image.getBounds().height, 0, 0, targetWidth,
-							targetHeight);
-					e.gc.drawImage(image, 0, 0, image.getBounds().width, image.getBounds().height, thumbX, thumbY,
-							thumbWidth, thumbHeight);
-					e.gc.setForeground(new Color(Display.getDefault(), 0, 0, 0));
-					e.gc.drawText(String.format("%d / %d\n%s", workingDir.getCurrentIndex(), workingDir.getFileLength(),
-							currentFile.getName()), thumbX, thumbHeight + 10);
-				}
-				if (currentFile.isSelected()) {
-					e.gc.setBackground(new Color(Display.getDefault(), 0, 255, 0));
-					e.gc.fillRoundRectangle(10, 10, 10, 10, 10, 10);
-				}
-				if (currentFile.isDeleted()) {
-					e.gc.setBackground(new Color(Display.getDefault(), 255, 0, 0));
-					e.gc.fillRoundRectangle(10, 10, 10, 10, 10, 10);
-				}
 			}
 		});
 
@@ -350,5 +308,79 @@ public class MainWindow {
 			e.printStackTrace();
 		}
 		canvas.redraw(10, 10, 10, 10, false);
+	}
+
+	class CanvasActionListener implements KeyListener {
+
+		private int indexBuffer = 0;
+
+		public void keyReleased(KeyEvent e) {
+		}
+
+		public void keyPressed(KeyEvent e) {
+			// System.out.println(e.keyCode);
+			if (e.keyCode == 32) {
+				selectCurrentPic();
+			} else if (e.keyCode == 'd') {
+				delCurrentPic();
+			} else if (e.keyCode == 'k') {
+				prevPic();
+			} else if (e.keyCode == 'j') {
+				nextPic();
+			} else if (e.keyCode >= '0' && e.keyCode <= '9') {
+				this.indexBuffer *= 10;
+				this.indexBuffer += e.keyCode - '0';
+			} else if (e.keyCode == 'g') {
+				setPicIndex(this.indexBuffer);
+				this.indexBuffer = 0;
+			}
+		}
+	}
+
+	class CanvasPainter implements PaintListener {
+		public void paintControl(PaintEvent e) {
+			if (currentFile == null)
+				return;
+
+			if (e.x != 10 || e.y != 10 || e.width != 10 || e.height != 10) {
+				Image image = new Image(Display.getDefault(), currentFile.getAbsolutePath());
+				float srcWidth = image.getBounds().width;
+				float srcHeight = image.getBounds().height;
+				int targetWidth = canvas.getBounds().width;
+				int targetHeight = canvas.getBounds().height;
+				float widthRatio = targetWidth / srcWidth;
+				float heightRatio = targetHeight / srcHeight;
+				if (widthRatio > heightRatio) {
+					targetWidth = (int) (heightRatio * srcWidth);
+				} else {
+					targetHeight = (int) (widthRatio * srcHeight);
+				}
+
+				int thumbX = targetWidth + 10;
+				int thumbY = 0;
+				int thumbWidth = canvas.getBounds().width - thumbX;
+				if (thumbWidth > 200) {
+					thumbWidth = 200;
+				}
+				int thumbHeight = (int) (thumbWidth / srcWidth * srcHeight);
+				e.gc.drawImage(image, 0, 0, image.getBounds().width, image.getBounds().height, 0, 0, targetWidth,
+						targetHeight);
+				if (thumbWidth > 0) {
+					e.gc.drawImage(image, 0, 0, image.getBounds().width, image.getBounds().height, thumbX, thumbY,
+							thumbWidth, thumbHeight);
+					e.gc.setForeground(new Color(Display.getDefault(), 0, 0, 0));
+					e.gc.drawText(String.format("%d / %d\n%s", workingDir.getCurrentIndex(), workingDir.getFileLength(),
+							currentFile.getName()), thumbX, thumbHeight + 10);
+				}
+			}
+			if (currentFile.isSelected()) {
+				e.gc.setBackground(new Color(Display.getDefault(), 0, 255, 0));
+				e.gc.fillRoundRectangle(10, 10, 10, 10, 10, 10);
+			}
+			if (currentFile.isDeleted()) {
+				e.gc.setBackground(new Color(Display.getDefault(), 255, 0, 0));
+				e.gc.fillRoundRectangle(10, 10, 10, 10, 10, 10);
+			}
+		}
 	}
 }

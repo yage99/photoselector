@@ -11,9 +11,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author zhangya
@@ -37,6 +41,8 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 	List<SelectableFile> fileList = new LinkedList<>();
 	private int currentIndex;
 	private File metaFile;
+
+	private String combineExpression;
 
 	/**
 	 * @param parent
@@ -273,7 +279,52 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 			}
 		});
 
+		Map<String, Integer> map = new HashMap<String, Integer>();
+		if (this.combineExpression != null && !"".equals(this.combineExpression)) {
+			Pattern pattern = Pattern.compile(this.combineExpression);
+
+			for (String line : result) {
+				Matcher matcher = pattern.matcher(line);
+				if (!matcher.find()) {
+					continue;
+				}
+				String id = matcher.group();
+				if (!"".equals(id)) {
+					Integer count = map.get(id);
+					if (count == null) {
+						count = 1;
+					} else {
+						count++;
+					}
+					map.put(id, count);
+				}
+			}
+
+			LinkedList<String> combined = new LinkedList<>();
+			Iterator<String> keyIterator = map.keySet().iterator();
+			while (keyIterator.hasNext()) {
+				String key = keyIterator.next();
+				combined.add(key + " (" + map.get(key) + ")");
+			}
+			combined.sort(new Comparator<String>() {
+
+				@Override
+				public int compare(String o1, String o2) {
+					return o1.compareTo(o2);
+				}
+			});
+
+			return combined;
+		}
+
 		return result;
+	}
+
+	/**
+	 * @param text
+	 */
+	public void setCombineExpression(String text) {
+		this.combineExpression = text;
 	}
 
 }
