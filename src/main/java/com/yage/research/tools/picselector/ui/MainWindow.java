@@ -93,7 +93,7 @@ public class MainWindow {
 		this.currentFile = this.workingDir.getCurrentFile();
 		canvas.redraw();
 
-		list.setItems(workingDir.getSelectedPics().toArray(new String[] {}));
+		updateList();
 	}
 
 	/**
@@ -240,11 +240,10 @@ public class MainWindow {
 			label.setLayoutData(gridData);
 		}
 
-		list = new List(shell, SWT.BORDER);
+		list = new List(shell, SWT.V_SCROLL);
 		GridData gridData = new GridData(GridData.FILL, GridData.FILL, true, true);
 		gridData.horizontalSpan = 1;
 		list.setLayoutData(gridData);
-		list.setEnabled(false);
 
 		this.canvas = new Canvas(shell, SWT.NONE);
 		gridData = new GridData(GridData.FILL, GridData.FILL, true, true);
@@ -258,6 +257,7 @@ public class MainWindow {
 		new Label(shell, SWT.NONE).setText("Combine Expression:");
 		regularExpression = new Text(shell, SWT.SINGLE | SWT.BORDER);
 		gridData = new GridData(SWT.FILL, SWT.BEGINNING, false, false);
+		gridData.widthHint = 10;
 		regularExpression.setLayoutData(gridData);
 		regularExpression.setText("TCGA-\\w{2}-\\w{4}-\\w{3}-\\w{2}-\\w{3}");
 		regularExpression.addFocusListener(new FocusListener() {
@@ -265,7 +265,7 @@ public class MainWindow {
 			@Override
 			public void focusLost(FocusEvent e) {
 				workingDir.setCombineExpression(regularExpression.getText());
-				list.setItems(workingDir.getSelectedPics().toArray(new String[] {}));
+				updateList();
 			}
 
 			@Override
@@ -295,7 +295,7 @@ public class MainWindow {
 			e.printStackTrace();
 		}
 		canvas.redraw(10, 10, 10, 10, false);
-		list.setItems(workingDir.getSelectedPics().toArray(new String[] {}));
+		updateList();
 	}
 
 	protected void delCurrentPic() {
@@ -308,6 +308,12 @@ public class MainWindow {
 			e.printStackTrace();
 		}
 		canvas.redraw(10, 10, 10, 10, false);
+	}
+
+	private void updateList() {
+		list.setItems(workingDir.getSelectedPics().toArray(new String[] {}));
+		list.select(list.getItemCount() - 1);
+		list.showSelection();
 	}
 
 	class CanvasActionListener implements KeyListener {
