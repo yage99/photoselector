@@ -14,16 +14,18 @@ import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
 import com.yage.research.tools.picselector.file.SelectableFile;
@@ -41,6 +43,7 @@ public class MainWindow {
 
 	private WorkingDir workingDir;
 	private SelectableFile currentFile;
+	private List list;
 
 	/**
 	 * Open the window.
@@ -84,6 +87,8 @@ public class MainWindow {
 
 		this.currentFile = this.workingDir.getCurrentFile();
 		canvas.redraw();
+
+		list.setItems(workingDir.getSelectedPics().toArray(new String[] {}));
 	}
 
 	/**
@@ -111,11 +116,9 @@ public class MainWindow {
 		shell = new Shell();
 		shell.setSize(569, 441);
 		shell.setText("SWT Application");
-		FillLayout fl_shell = new FillLayout(SWT.VERTICAL);
-		fl_shell.spacing = 5;
-		fl_shell.marginWidth = 10;
-		fl_shell.marginHeight = 10;
-		shell.setLayout(fl_shell);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 5;
+		shell.setLayout(layout);
 
 		Menu menuBar = new Menu(shell, SWT.BAR);
 		shell.setMenuBar(menuBar);
@@ -221,7 +224,27 @@ public class MainWindow {
 
 		});
 
+		String[] labelText = new String[] { "Selected", "Image" };
+		for (int i = 0; i < 5; i++) {
+			Label label = new Label(shell, SWT.HORIZONTAL);
+			GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
+			if (labelText.length > i) {
+				label.setText(labelText[i]);
+			}
+			gridData.heightHint = 20;
+			label.setLayoutData(gridData);
+		}
+
+		list = new List(shell, SWT.BORDER);
+		GridData gridData = new GridData(GridData.FILL, GridData.FILL, true, true);
+		gridData.horizontalSpan = 1;
+		list.setLayoutData(gridData);
+
 		this.canvas = new Canvas(shell, SWT.NONE);
+		gridData = new GridData(GridData.FILL, GridData.FILL, true, true);
+		gridData.horizontalSpan = 4;
+		canvas.setLayoutData(gridData);
+		canvas.setBackground(new Color(Display.getDefault(), 255, 255, 255));
 		canvas.addKeyListener(new KeyListener() {
 
 			private int indexBuffer = 0;
@@ -292,6 +315,8 @@ public class MainWindow {
 				}
 			}
 		});
+
+		shell.pack();
 	}
 
 	protected void nextPic() {
@@ -312,6 +337,7 @@ public class MainWindow {
 			e.printStackTrace();
 		}
 		canvas.redraw(10, 10, 10, 10, false);
+		list.setItems(workingDir.getSelectedPics().toArray(new String[] {}));
 	}
 
 	protected void delCurrentPic() {

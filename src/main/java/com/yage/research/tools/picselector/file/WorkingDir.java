@@ -29,11 +29,11 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 	/**
 	 * 
 	 */
-	public static final int SELECT_FLAG = 0x0;
+	public static final int SELECT_FLAG = 0x1;
 	/**
 	 * 
 	 */
-	public static final int DELETE_FLAG = 0x1;
+	public static final int DELETE_FLAG = 0x1 << 1;
 	List<SelectableFile> fileList = new LinkedList<>();
 	private int currentIndex;
 	private File metaFile;
@@ -253,6 +253,27 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 		}
 		writer.flush();
 		writer.close();
+	}
+
+	/**
+	 * @return all selected pics
+	 */
+	public LinkedList<String> getSelectedPics() {
+		LinkedList<String> result = new LinkedList<>();
+		for (SelectableFile file : fileList) {
+			if (file.isSelected()) {
+				result.add(file.getName());
+			}
+		}
+		result.sort(new Comparator<String>() {
+
+			@Override
+			public int compare(String o1, String o2) {
+				return o1.compareTo(o2);
+			}
+		});
+
+		return result;
 	}
 
 }
