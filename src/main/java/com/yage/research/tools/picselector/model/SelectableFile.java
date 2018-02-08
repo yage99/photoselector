@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.yage.research.tools.picselector.file;
+package com.yage.research.tools.picselector.model;
 
 import java.io.File;
 
@@ -20,8 +20,10 @@ public class SelectableFile extends File {
 	private boolean deleted = false;
 	private long seekPosition = 0;
 
+	private int index;
+
 	/**
-	 * @param parent 
+	 * @param parent
 	 * @param file
 	 * @param selected
 	 * @param deleted
@@ -83,6 +85,25 @@ public class SelectableFile extends File {
 	 */
 	void setSeekPosition(long seekPosition) {
 		this.seekPosition = seekPosition;
+	}
+
+	@Override
+	public String toString() {
+		return this.getName();
+	}
+
+	/**
+	 * @param i
+	 */
+	public void setIndex(int i) {
+		this.index = i;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getIndex() {
+		return this.index;
 	}
 
 }

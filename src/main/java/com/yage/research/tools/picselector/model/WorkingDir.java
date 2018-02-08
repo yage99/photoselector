@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.yage.research.tools.picselector.file;
+package com.yage.research.tools.picselector.model;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -11,13 +11,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author zhangya
@@ -39,10 +35,11 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 	 */
 	public static final int DELETE_FLAG = 0x1 << 1;
 	List<SelectableFile> fileList = new LinkedList<>();
+
 	private int currentIndex;
 	private File metaFile;
 
-	private String combineExpression;
+	private ListModel listModel;
 
 	/**
 	 * @param parent
@@ -130,6 +127,8 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 		FileWriter writer = new FileWriter(this);
 		for (int i = 0; i < fileList.size(); i++) {
 			SelectableFile file = fileList.get(i);
+			file.setIndex(i);
+
 			String name = file.getName();
 			char se = file.isSelected() ? '1' : '0';
 			char de = file.isDeleted() ? '1' : '0';
@@ -157,6 +156,13 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 		raf.write(',');
 		raf.write(de);
 		raf.close();
+
+		if (listModel != null) {
+			if (file.isSelected())
+				listModel.add(file);
+			else
+				listModel.remove(file);
+		}
 	}
 
 	/*
@@ -264,67 +270,24 @@ public class WorkingDir extends File implements Comparator<SelectableFile> {
 	/**
 	 * @return all selected pics
 	 */
-	public LinkedList<String> getSelectedPics() {
-		LinkedList<String> result = new LinkedList<>();
-		for (SelectableFile file : fileList) {
-			if (file.isSelected()) {
-				result.add(file.getName());
-			}
+	public ListModel getListModel() {
+		if (listModel == null) {
+			setCombineExpression(null);
+			return listModel;
 		}
-		result.sort(new Comparator<String>() {
-
-			@Override
-			public int compare(String o1, String o2) {
-				return o1.compareTo(o2);
-			}
-		});
-
-		Map<String, Integer> map = new HashMap<String, Integer>();
-		if (this.combineExpression != null && !"".equals(this.combineExpression)) {
-			Pattern pattern = Pattern.compile(this.combineExpression);
-
-			for (String line : result) {
-				Matcher matcher = pattern.matcher(line);
-				if (!matcher.find()) {
-					continue;
-				}
-				String id = matcher.group();
-				if (!"".equals(id)) {
-					Integer count = map.get(id);
-					if (count == null) {
-						count = 1;
-					} else {
-						count++;
-					}
-					map.put(id, count);
-				}
-			}
-
-			LinkedList<String> combined = new LinkedList<>();
-			Iterator<String> keyIterator = map.keySet().iterator();
-			while (keyIterator.hasNext()) {
-				String key = keyIterator.next();
-				combined.add(key + " (" + map.get(key) + ")");
-			}
-			combined.sort(new Comparator<String>() {
-
-				@Override
-				public int compare(String o1, String o2) {
-					return o1.compareTo(o2);
-				}
-			});
-
-			return combined;
-		}
-
-		return result;
+		return listModel;
 	}
 
 	/**
 	 * @param text
 	 */
 	public void setCombineExpression(String text) {
-		this.combineExpression = text;
+		this.listModel = new ListModel(text);
+		for (SelectableFile file : fileList) {
+			if (file.isSelected()) {
+				this.listModel.add(file);
+			}
+		}
 	}
 
 }

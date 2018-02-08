@@ -14,6 +14,8 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
@@ -31,8 +33,8 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import com.yage.research.tools.picselector.file.SelectableFile;
-import com.yage.research.tools.picselector.file.WorkingDir;
+import com.yage.research.tools.picselector.model.SelectableFile;
+import com.yage.research.tools.picselector.model.WorkingDir;
 
 /**
  * @author zhangya
@@ -105,6 +107,11 @@ public class MainWindow {
 		try {
 			workingDir.setCurrentIndex(indexOfPic);
 			this.currentFile = workingDir.getCurrentFile();
+			int position = workingDir.getListModel().getListByFile(this.currentFile);
+			if (position >= 0) {
+				list.select(position);
+				list.showSelection();
+			}
 			canvas.redraw();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -244,6 +251,25 @@ public class MainWindow {
 		GridData gridData = new GridData(GridData.FILL, GridData.FILL, true, true);
 		gridData.horizontalSpan = 1;
 		list.setLayoutData(gridData);
+		list.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String[] keys = list.getSelection();
+				if (keys.length == 0)
+					return;
+				int postion = workingDir.getListModel().getPositionByList(keys[0]);
+				if (postion >= 0) {
+					setPicIndex(postion);
+				}
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
 
 		this.canvas = new Canvas(shell, SWT.NONE);
 		gridData = new GridData(GridData.FILL, GridData.FILL, true, true);
@@ -311,8 +337,8 @@ public class MainWindow {
 	}
 
 	private void updateList() {
-		list.setItems(workingDir.getSelectedPics().toArray(new String[] {}));
-		list.select(list.getItemCount() - 1);
+		list.setItems(workingDir.getListModel().getListItems());
+		list.select(workingDir.getListModel().getListByFile(workingDir.getCurrentFile()));
 		list.showSelection();
 	}
 
